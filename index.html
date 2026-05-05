@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Licznik spalania</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -24,7 +23,6 @@ body {
 }
 
 h1 {
-  font-size: 22px;
   text-align: center;
 }
 
@@ -70,7 +68,6 @@ button {
 .progress-label {
   font-size: 14px;
   margin-bottom: 6px;
-  opacity: 0.8;
   display: flex;
   justify-content: space-between;
 }
@@ -85,8 +82,9 @@ button {
 
 .bar {
   height: 100%;
-  width: 100%;
-  transition: all 0.2s linear;
+  width: 0%;
+  background: red;
+  transition: width 0.2s linear;
 }
 
 </style>
@@ -102,52 +100,22 @@ button {
     <button onclick="start()">🚀 Start</button>
 
     <div class="stat">
-      <span>⏱ Czas</span>
+      <span>⏱</span>
       <span id="time">0 s</span>
     </div>
 
     <div class="stat">
-      <span>💸 Wydane</span>
+      <span>💸</span>
       <span id="spent">0 zł</span>
     </div>
 
     <div class="stat">
-      <span>💰 Zostało</span>
+      <span>💰</span>
       <span id="remaining">0 zł</span>
     </div>
 
-    <!-- MONTH -->
-    <div class="progress-block">
-      <div class="progress-label">
-        <span>🗓 Miesiąc</span>
-        <span id="monthLabel">0 / 0</span>
-      </div>
-      <div class="progress">
-        <div class="bar" id="monthBar"></div>
-      </div>
-    </div>
-
-    <!-- WEEK -->
-    <div class="progress-block">
-      <div class="progress-label">
-        <span>📆 Tydzień</span>
-        <span id="weekLabel">0 / 0</span>
-      </div>
-      <div class="progress">
-        <div class="bar" id="weekBar"></div>
-      </div>
-    </div>
-
-    <!-- DAY -->
-    <div class="progress-block">
-      <div class="progress-label">
-        <span>📅 Dzień</span>
-        <span id="dayLabel">0 / 0</span>
-      </div>
-      <div class="progress">
-        <div class="bar" id="dayBar"></div>
-      </div>
-    </div>
+    <!-- BARS -->
+    <div id="bars"></div>
 
   </div>
 </div>
@@ -155,19 +123,38 @@ button {
 <script>
 let interval;
 
-function getColor(percent) {
-  const r = Math.floor(255 * (1 - percent/100));
-  const g = Math.floor(200 * (percent/100));
-  return `rgb(${r}, ${g}, 80)`;
+const periods = [
+  { name: "🕐 Minuta", seconds: 60 },
+  { name: "🕑 Godzina", seconds: 3600 },
+  { name: "📅 Dzień", seconds: 86400 },
+  { name: "📆 Tydzień", seconds: 604800 },
+  { name: "🗓 Miesiąc", seconds: 2629800 }
+];
+
+function createBars() {
+  const container = document.getElementById("bars");
+  container.innerHTML = "";
+
+  periods.forEach(p => {
+    container.innerHTML += `
+      <div class="progress-block">
+        <div class="progress-label">
+          <span>${p.name}</span>
+          <span id="${p.name}-label">0 / 0</span>
+        </div>
+        <div class="progress">
+          <div class="bar" id="${p.name}-bar"></div>
+        </div>
+      </div>
+    `;
+  });
 }
 
 function start() {
   clearInterval(interval);
+  createBars();
 
   const monthly = parseFloat(document.getElementById("monthly").value);
-  const daily = monthly / 30;
-  const weekly = daily * 7;
-
   const secondsInMonth = 365.25 / 12 * 24 * 3600;
   const rate = monthly / secondsInMonth;
 
@@ -177,30 +164,25 @@ function start() {
     const elapsed = (Date.now() - startTime) / 1000;
     const spent = elapsed * rate;
 
-    const remainingMonth = monthly - spent;
-    const remainingWeek = weekly - spent;
-    const remainingDay = daily - spent;
-
     document.getElementById("time").innerText = elapsed.toFixed(1) + " s";
     document.getElementById("spent").innerText = spent.toFixed(2) + " zł";
-    document.getElementById("remaining").innerText = remainingMonth.toFixed(2) + " zł";
+    document.getElementById("remaining").innerText = (monthly - spent).toFixed(2) + " zł";
 
-    updateBar("monthBar", "monthLabel", remainingMonth, monthly);
-    updateBar("weekBar", "weekLabel", remainingWeek, weekly);
-    updateBar("dayBar", "dayLabel", remainingDay, daily);
+    periods.forEach(p => {
+      const total = rate * p.seconds;
+      const used = spent;
+      const percentUsed = Math.min(100, (used / total) * 100);
+
+      const bar = document.getElementById(p.name + "-bar");
+      const label = document.getElementById(p.name + "-label");
+
+      bar.style.width = percentUsed + "%";
+
+      label.innerText =
+        `${Math.max(0, total - used).toFixed(0)} / ${total.toFixed(0)} zł`;
+    });
 
   }, 50);
-}
-
-function updateBar(barId, labelId, remaining, total) {
-  const percent = Math.max(0, (remaining / total) * 100);
-
-  const bar = document.getElementById(barId);
-  bar.style.width = percent + "%";
-  bar.style.background = getColor(percent);
-
-  document.getElementById(labelId).innerText =
-    `${Math.max(0, remaining).toFixed(0)} / ${total.toFixed(0)} zł`;
 }
 </script>
 
