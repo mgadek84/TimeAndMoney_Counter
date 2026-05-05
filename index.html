@@ -1,56 +1,159 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Licznik spalania</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      background: #111;
-      color: #fff;
-      padding: 50px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Licznik spalania</title>
 
-    input, button {
-      padding: 10px;
-      font-size: 18px;
-      margin: 10px;
-    }
+<style>
+  * {
+    box-sizing: border-box;
+  }
 
-    .box {
-      margin-top: 30px;
-      font-size: 24px;
-    }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0d0d0d;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+  }
 
-    .progress {
-      width: 300px;
-      height: 20px;
-      background: #333;
-      margin: 20px auto;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+  .container {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
 
-    .bar {
-      height: 100%;
-      background: red;
-      width: 100%;
-    }
-  </style>
+  h1 {
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  input {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 12px;
+    background: #222;
+    color: white;
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    background: #ff3b3b;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  .stat {
+    background: #222;
+    padding: 14px;
+    border-radius: 12px;
+    margin-top: 10px;
+    font-size: 17px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .label {
+    opacity: 0.7;
+  }
+
+  .value {
+    font-weight: bold;
+  }
+
+  .progress {
+    margin-top: 18px;
+    width: 100%;
+    height: 16px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff3b3b, #ff0000);
+    width: 100%;
+    transition: width 0.2s linear;
+  }
+
+  .section-title {
+    margin-top: 18px;
+    font-size: 14px;
+    opacity: 0.6;
+  }
+
+</style>
 </head>
+
 <body>
 
-<h1>Licznik spalania budżetu miesięcznego</h1>
+<div class="container">
+  <h1>🔥 Spalanie budżetu</h1>
 
-<input id="monthly" type="number" value="10000">
-<br>
-<button onclick="start()">🚀 Start</button>
+  <div class="card">
+    <input id="monthly" type="number" value="10000">
+    <button onclick="start()">🚀 Start</button>
 
-<div class="box" id="output"></div>
+    <div class="stat">
+      <span class="label">⏱ Czas</span>
+      <span class="value" id="time">0 s</span>
+    </div>
 
-<div class="progress">
-  <div class="bar" id="bar"></div>
+    <div class="stat">
+      <span class="label">💸 Wydane</span>
+      <span class="value" id="spent">0 zł</span>
+    </div>
+
+    <div class="stat">
+      <span class="label">💰 Zostało</span>
+      <span class="value" id="remaining">0 zł</span>
+    </div>
+
+    <div class="progress">
+      <div class="bar" id="bar"></div>
+    </div>
+
+    <div class="section-title">TEMPO SPALANIA</div>
+
+    <div class="stat">
+      <span class="label">📅 Dziennie</span>
+      <span class="value" id="daily">0 zł</span>
+    </div>
+
+    <div class="stat">
+      <span class="label">📆 Tygodniowo</span>
+      <span class="value" id="weekly">0 zł</span>
+    </div>
+
+    <div class="stat">
+      <span class="label">🗓 Miesięcznie</span>
+      <span class="value" id="monthlyRate">0 zł</span>
+    </div>
+
+  </div>
 </div>
 
 <script>
@@ -60,6 +163,14 @@ function start() {
   clearInterval(interval);
 
   const monthly = parseFloat(document.getElementById("monthly").value);
+
+  const daily = monthly / 30;
+  const weekly = daily * 7;
+
+  document.getElementById("daily").innerText = daily.toFixed(2) + " zł";
+  document.getElementById("weekly").innerText = weekly.toFixed(2) + " zł";
+  document.getElementById("monthlyRate").innerText = monthly.toFixed(2) + " zł";
+
   const secondsInMonth = 365.25 / 12 * 24 * 3600;
   const rate = monthly / secondsInMonth;
 
@@ -70,14 +181,13 @@ function start() {
     const spent = elapsed * rate;
     const remaining = monthly - spent;
 
-    document.getElementById("output").innerHTML = `
-      ⏱ ${elapsed.toFixed(1)} s<br>
-      💸 ${spent.toFixed(2)} zł<br>
-      💰 ${remaining.toFixed(2)} zł
-    `;
+    document.getElementById("time").innerText = elapsed.toFixed(1) + " s";
+    document.getElementById("spent").innerText = spent.toFixed(2) + " zł";
+    document.getElementById("remaining").innerText = remaining.toFixed(2) + " zł";
 
     const percent = (remaining / monthly) * 100;
     document.getElementById("bar").style.width = percent + "%";
+
   }, 50);
 }
 </script>
